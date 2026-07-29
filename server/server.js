@@ -1,10 +1,12 @@
 const dotenv = require('dotenv');
 dotenv.config();                         // must be FIRST
+console.log('JWT_SECRET:', process.env.JWT_SECRET);
 
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db'); // import after dotenv.config()
 const authRoutes = require('./routers/authRoutes')
+const productRoutes = require('./routers/productRoutes')
 
 connectDB();
 
@@ -15,6 +17,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use('/api/auth',authRoutes)
+app.use('/api/products', productRoutes)
 
 app.get('/', (req, res) => res.send('ExpiryMart API running'));
 

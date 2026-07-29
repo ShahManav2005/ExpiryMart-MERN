@@ -1,31 +1,30 @@
 const jwt = require('jsonwebtoken')
 const User = require('../models/User')
 
-const protect = async (req,res,next) => {
+const protect = async (req, res, next) => {
     let token;
 
-    if(req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        try{
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
             token = req.headers.authorization.split(' ')[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = await User.findBy(decoded.id).select('-password')
+            req.user = await User.findById(decoded.id).select('-password')
             next()
-        }catch(err) {
-            res.status(401).json({message : 'Not autorized , token failed'})
+        } catch (err) {
+            res.status(401).json({ message: 'Not authorized, token failed' })
         }
-    }else{
-        res.status(401).json({message : 'Not autorized , no token'})
+    } else {
+        res.status(401).json({ message: 'Not authorized, no token' })
     }
 };
 
-//restricts route to specific roles
-const autorize = (...role) => {
-    return (req,res,next) => {
-        if(!roles.includes(req.user.role)){
-            return res.status(403).json({message : `Role '${req.user.role}' not allowed`})
+const authorize = (...roles) => {
+    return (req, res, next) => {
+        if (!roles.includes(req.user.role)) {
+            return res.status(403).json({ message: `Role '${req.user.role}' not allowed` })
         }
         next();
     };
 };
 
-module.exports = {protect , autorize};
+module.exports = { protect, authorize };
