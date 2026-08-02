@@ -7,12 +7,15 @@ const createProduct = async (req , res) => {
     try{
         const {name,category,quantity,expiryDate,price} = req.body;
 
+        const imageUrls = req.files ? req.files.map(file => file.path) : [];
+
         const product = await Product.create({
             name,
             category,
             quantity,
             expiryDate,
             price,
+            images : imageUrls,
             sellerId: req.user._id,
         });
 
@@ -73,6 +76,10 @@ const updateProduct = async (req,res) => {
         product.quantity = quantity ?? product.quantity;
         product.expiryDate = expiryDate ?? product.expiryDate;
         product.price = price ?? product.price;
+
+        if(req.files && req.files.length > 0){
+            product.images = req.files.map(file => file.path);
+        }
 
         const updated = await product.save();
         res.json(updated);

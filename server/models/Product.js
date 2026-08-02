@@ -7,7 +7,7 @@ const productSchema = new mongoose.Schema({
     expiryDate : {type : Date , required : true},
     price : {type : Number , required : true},
     discountedPrice : {type : Number},
-    images : [{type : Number}],
+    images : [{type : String}],
     status : {
         type : String ,
         enum : ['pending_inspection' , 'approved' , 'rejected' , 'listed' , 'sold'],
