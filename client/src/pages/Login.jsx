@@ -15,7 +15,7 @@ export default function Login() {
         setError('');
         try{
             const data = await login(form);
-            navigate(`/${data.role}/dashbord`);
+            navigate(`/${data.role}/dashboard`);
         }catch(err){
             setError(err.response?.data?.message || 'Login failed')
         }

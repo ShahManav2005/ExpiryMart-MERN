@@ -18,7 +18,7 @@ export default function Register() {
 
         try{
             const data = await register(form);
-            navigate(`/${data.role}/dashbord`)
+            navigate(`/${data.role}/dashboard`)
         }catch(err){
             setError(err.response?.data?.message || 'Registration failed')
         }
