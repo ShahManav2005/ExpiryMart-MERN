@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const Inspection = require('../models/Inspection')
 
 //@route POST /api/products
 //@access seller only
@@ -18,6 +19,12 @@ const createProduct = async (req , res) => {
             images : imageUrls,
             sellerId: req.user._id,
         });
+
+        //auto-create the matching inspection request
+        await Inspection.create({
+            productId : product._id,
+            status : 'pending'
+        })
 
         res.status(201).json(product);
     }catch(err){
