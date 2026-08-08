@@ -3,6 +3,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import ProtectedRoute from './components/ProtectedRoute'
 import SellerDashboard from './pages/seller/SellerDashboard'
+import AgentDashboard from './pages/agent/AgentDashboard'
 
 function App() {
   return (
@@ -18,7 +19,7 @@ function App() {
         <ProtectedRoute allowedRoles={['seller']}><SellerDashboard /></ProtectedRoute>
       } />
       <Route path="/agent/dashboard" element={
-        <ProtectedRoute allowedRoles={['agent']}><h1>Agent Dashboard</h1></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['agent']}><AgentDashboard /></ProtectedRoute>
       } />
     </Routes>
   )
