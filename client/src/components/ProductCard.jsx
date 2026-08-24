@@ -1,8 +1,10 @@
+import {Link} from 'react-router-dom';
+
 export default function ProductCard({ product }) {
   const daysLeft = Math.ceil((new Date(product.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
 
   return (
-    <div className="border rounded p-3">
+    <Link to={`/buyer/product/${product._id}`} className='border rounded p-3 block'>
       {product.images?.[0] && (
         <img src={product.images[0]} alt={product.name} className="w-full h-32 object-cover rounded mb-2" />
       )}
@@ -11,6 +13,6 @@ export default function ProductCard({ product }) {
       <p className="text-sm">₹{product.price}</p>
       <p className="text-sm">Available Quantity : {product.quantity}</p>
       <p className="text-xs text-gray-500">{daysLeft} days left</p>
-    </div>
+    </Link>
   );
 }

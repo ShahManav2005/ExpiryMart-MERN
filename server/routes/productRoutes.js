@@ -6,7 +6,8 @@ const {
     getProductById,
     updateProduct,
     deleteProduct,
-    getListedProducts
+    getListedProducts,
+    getPublicProductById
 } = require('../controllers/productController')
 
 const {protect , authorize} = require('../middleware/authMiddleware');
@@ -18,5 +19,6 @@ router.get('/:id' , protect , authorize('seller') , getProductById);
 router.put('/:id' , protect , authorize('seller') , upload.array('images',4) , updateProduct);
 router.delete('/:id' , protect , authorize('seller') , deleteProduct);
 router.get('/',getListedProducts)
+router.get('/public/:id',getPublicProductById);
 
 module.exports = router;

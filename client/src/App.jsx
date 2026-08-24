@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import SellerDashboard from './pages/seller/SellerDashboard'
 import AgentDashboard from './pages/agent/AgentDashboard'
 import ProductListing from './pages/buyer/ProductListing' 
+import ProductDetail from './pages/buyer/ProductDetails'
 
 function App() {
   return (
@@ -16,6 +17,8 @@ function App() {
       <Route path="/buyer/dashboard" element={
         <ProtectedRoute allowedRoles={['buyer']}> <ProductListing /> </ProtectedRoute>
       } />
+      <Route path='/buyer/product/:id' element={<ProductDetail/>} />
+      
       <Route path="/seller/dashboard" element={
         <ProtectedRoute allowedRoles={['seller']}><SellerDashboard /></ProtectedRoute>
       } />
