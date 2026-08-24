@@ -22,6 +22,10 @@ export default function AgentDashboard() {
         fetchInspections()
     } , [])
 
+    const handleDecided = (inspectionId) => {
+        setInspections(inspection.filter((i) => i._id !== inspectionId));
+    }
+
     return(
         <div className='max-w-2x1 mx-auto mt-10 px-4'>
             <h1 className='text-2xl font-bold mb-6'>Agent DashBoard</h1>
@@ -35,7 +39,7 @@ export default function AgentDashboard() {
                 <p className='text-gray-500'>No pending inspections right now.</p>
             ) : (
                 inspections.map((inspection) => (
-                    <InspectionCard key={inspection._id} inspection={inspection} />
+                    <InspectionCard key={inspection._id} inspection={inspection}  onDecided={handleDecided}/>
                 ))
             )}
         </div>

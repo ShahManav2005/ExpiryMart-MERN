@@ -115,10 +115,48 @@ const deleteProduct = async (req,res) => {
         res.status(500).json({message : err.message})
     }
 }
+
+// @route GET /api/products
+// @access public - buyer browse all listed products, with filters
+const getListedProducts = async (req,res) => {
+    try{
+        const {category , minPrice , maxPrice , maxDayToExpiry , search} = req.query;
+
+        const filter = { status : 'listed' };
+
+        if(category){
+            filter.category = category;
+        }
+
+        if(minPrice || maxPrice) {
+            filter.price = {};
+            if(minPrice) filter.price.$gte = Number(minPrice);
+            if(maxPrice) filter.price.$lte = Number(maxPrice);
+        }
+
+        if(maxDayToExpiry){
+            const cutofDate = new Date();
+            cutoffDates.setDate(cutoffDate.getDate() + Number(maxDaysToExpriry));
+            filter.expiryDate = { $lte : cutoffDate};
+        }
+
+        if(search){
+             const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            filter.name = new RegExp(search, 'i');  // case-insentative partial match
+        }
+
+        const products = await Product.find(filter).sort({expiryDate : 1})  //soonest-expriry first
+
+        res.json(products)
+    }catch(err){
+        res.status(500).json({message : err.message})
+    }
+}
 module.exports = {
     createProduct,
     getMyProducts,
     getProductById,
     updateProduct,
     deleteProduct,
+    getListedProducts
 }
