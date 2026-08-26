@@ -2,12 +2,15 @@ import { useState , useEffect } from "react";
 import { useParams } from "react-router-dom";
 import api from '../../api/axios'
 import { riskStyle , riskLabel } from "../../utils/riskBadge";
+import {useCart} from'../../context/CartContext'
 
 export default function ProductDetail() {
     const {id} = useParams();
+    const {addToCart} = useCart();
     const[product , setProduct] = useState(null);
     const[loading , setLoading] = useState(true);
     const[error , setError] = useState('');
+    const[added , setAdded] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -27,6 +30,12 @@ export default function ProductDetail() {
     if(error) return <p className="text-center mt-10 text-red-500">{error}</p>
 
     const {pricing} = product
+
+    const handleAddToCart = () => {
+        addToCart(product , pricing)
+        setAdded(true);
+        setTimeout(() => setAdded(false), 1500)
+    }
 
     return(
         <div className="max-w-2wl mx-auto mt-10 px-4">
@@ -58,6 +67,13 @@ export default function ProductDetail() {
             <p className="text-sm text-gray-600 mb-4">
                 Expires : {new Date(product.expriryDate).toLocaleDateString()} ({pricing.daysLeft} days left)
             </p>
+
+            <button
+                onClick={handleAddToCart}
+                className="bg-blue-600 text-white px-4 py-2 rounded w-full mt-2"
+            >
+                {added ? 'Added ✓' : 'Add to Cart'}
+            </button>
         </div>
     )
 }

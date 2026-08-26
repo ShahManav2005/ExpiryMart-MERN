@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useCart } from '../../context/CartContext';
 import api from '../../api/axios';
 import ProductCard from '../../components/ProductCard';
 import ProductFilters from '../../components/ProductFilter';
@@ -10,6 +12,7 @@ export default function ProductListing() {
   const [filters, setFilters] = useState({
     search: '', category: '', minPrice: '', maxPrice: '', maxDaysToExpiry: '',
   });
+  const {totalItems} = useCart()
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -34,8 +37,9 @@ export default function ProductListing() {
   }, [filters]);
 
   return (
-    <div className="max-w-5xl mx-auto mt-10 px-4">
-      <h1 className="text-2xl font-bold mb-6">Browse Products</h1>
+    <div className="flex justify-between items-center mb-6">
+      <h1 className="text-2xl font-bold">Browse Products</h1>
+      <Link to='/buyer/cart' className='text-blue-600'>Cart ({totalItems})</Link>
 
       <ProductFilters filters={filters} onChange={setFilters} />
 
