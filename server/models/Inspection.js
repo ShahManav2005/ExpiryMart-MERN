@@ -5,7 +5,12 @@ const inspectionSchema = new mongoose.Schema({
     agentId : {type : mongoose.Schema.Types.ObjectId , ref : 'User'},
     status : {type : String , enum : ['pending' , 'approved' , 'rejected'], default : 'pending'},
     notes : {type : String},
-    inspectedAt : {type : Date}
+    inspectedAt : {type : Date},
+    buyingPricePercent: { type: Number },
+    markupPercent: { type: Number },
+    agentCommission: { type: Number },
+    inspectionFee: { type: Number, default: 100 },
+    feeRefunded: { type: Boolean },
 } , { timestamps : true})
 
 module.exports = mongoose.model('Inspection' , inspectionSchema)

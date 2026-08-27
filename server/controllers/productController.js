@@ -1,6 +1,7 @@
 const Product = require('../models/Product');
 const Inspection = require('../models/Inspection')
-const { calculatePricing } = require('../utils/pricingEngine')
+const { getDaysLeft } = require('../utils/pricingEngine');
+
 
 //@route POST /api/products
 //@access seller only
@@ -156,21 +157,22 @@ const getListedProducts = async (req,res) => {
 
 // @route GET  /api/products/public/:id
 // @access public - buyer views a single listed product with pricing info
-const getPublicProductById = async (req,res) => {
-    try{
-        const product = await Product.findById(req.params.id);
+const getPublicProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
 
-        if(!product || product.status !== 'listed'){
-            return res.status(404).json({message : 'Product not found'})
-        }
-
-        const pricing = calculatePricing(product)
-
-        res.json({...product.toObject() , pricing})
-    }catch(err){
-        res.status(500).json({message : err.message})
+    if (!product || product.status !== 'listed') {
+      return res.status(404).json({ message: 'Product not found' });
     }
-}
+
+    const daysLeft = getDaysLeft(product.expiryDate);
+
+    res.json({ ...product.toObject(), daysLeft });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
     createProduct,
     getMyProducts,

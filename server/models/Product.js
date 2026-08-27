@@ -7,6 +7,8 @@ const productSchema = new mongoose.Schema({
     expiryDate : {type : Date , required : true},
     price : {type : Number , required : true},
     discountedPrice : {type : Number},
+    buyingPrice: { type: Number },   // what ExpiryMart pays the seller (set at approval)
+    sellingPrice: { type: Number },  // what the buyer pays (computed at approval)
     images : [{type : String}],
     status : {
         type : String ,

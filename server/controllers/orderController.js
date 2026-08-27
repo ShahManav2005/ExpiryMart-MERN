@@ -25,7 +25,7 @@ const createOrder = async (req, res) => {
         return res.status(400).json({ message: `Not enough stock for ${product.name}` });
       }
 
-      const price = product.discountedPrice || product.price;
+      const price = product.sellingPrice;
       totalAmount += price * cartItem.quantity;
 
       orderItems.push({

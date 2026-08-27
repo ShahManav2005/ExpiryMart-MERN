@@ -23,7 +23,7 @@ export default function AgentDashboard() {
     } , [])
 
     const handleDecided = (inspectionId) => {
-        setInspections(inspection.filter((i) => i._id !== inspectionId));
+    setInspections(inspections.filter((i) => i._id !== inspectionId));
     }
 
     return(
