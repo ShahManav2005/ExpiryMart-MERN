@@ -1,42 +1,50 @@
-import { statusStyles, statusLabel } from '../utils/statusBadge';
+import Badge from './Badge';
+
+const statusVariant = {
+  pending_inspection: 'warning',
+  listed: 'success',
+  rejected: 'danger',
+  sold: 'neutral',
+};
+
+const statusLabel = {
+  pending_inspection: 'Pending Inspection',
+  listed: 'Listed',
+  rejected: 'Rejected',
+  sold: 'Sold',
+};
 
 export default function ProductTable({ products, onDelete }) {
-  if (products.length === 0) {
-    return <p className="text-gray-500">No products listed yet. Add your first one above.</p>;
-  }
+  if (products.length === 0) return null; // EmptyState handled by parent
 
   return (
-    <table className="w-full border-collapse">
-      <thead>
-        <tr className="border-b text-left">
-          <th className="p-2">Name</th>
-          <th className="p-2">Category</th>
-          <th className="p-2">Qty</th>
-          <th className="p-2">Price</th>
-          <th className="p-2">Expiry</th>
-          <th className="p-2">Status</th>
-          <th className="p-2">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {products.map((p) => (
-          <tr key={p._id} className="border-b">
-            <td className="p-2">{p.name}</td>
-            <td className="p-2">{p.category}</td>
-            <td className="p-2">{p.quantity}</td>
-            <td className="p-2">₹{p.price}</td>
-            <td className="p-2">{new Date(p.expiryDate).toLocaleDateString()}</td>
-            <td className="p-2">
-              <span className={`px-2 py-1 rounded text-xs ${statusStyles[p.status]}`}>
-                {statusLabel[p.status]}
-              </span>
-            </td>
-            <td className="p-2">
-              <button onClick={() => onDelete(p._id)} className="text-red-600 text-sm">Delete</button>
-            </td>
+    <div className="bg-white rounded-xl border overflow-hidden">
+      <table className="w-full text-sm">
+        <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+          <tr>
+            <th className="p-3 text-left">Product</th>
+            <th className="p-3 text-left">Category</th>
+            <th className="p-3 text-left">Qty</th>
+            <th className="p-3 text-left">MRP</th>
+            <th className="p-3 text-left">Status</th>
+            <th className="p-3 text-left"></th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody className="divide-y">
+          {products.map((p) => (
+            <tr key={p._id}>
+              <td className="p-3 font-medium">{p.name}</td>
+              <td className="p-3 text-gray-500">{p.category}</td>
+              <td className="p-3">{p.quantity}</td>
+              <td className="p-3">₹{p.price}</td>
+              <td className="p-3"><Badge variant={statusVariant[p.status]}>{statusLabel[p.status]}</Badge></td>
+              <td className="p-3">
+                <button onClick={() => onDelete(p._id)} className="text-red-600 hover:underline text-xs">Delete</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

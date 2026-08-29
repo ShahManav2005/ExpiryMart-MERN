@@ -10,6 +10,8 @@ import Cart from './pages/buyer/Cart'
 import Checkout from './pages/buyer/Checkout'
 import OrderList from './pages/buyer/OrderList'
 import OrderStatus from './pages/buyer/OrderStatus'
+import Layout from './components/Layout'
+import Profile from './pages/buyer/Profile'
 
 function App() {
   return (
@@ -19,19 +21,23 @@ function App() {
       <Route path="/register" element={<Register />} />
 
       <Route path="/buyer/dashboard" element={
-        <ProtectedRoute allowedRoles={['buyer']}> <ProductListing /> </ProtectedRoute>
+        <ProtectedRoute allowedRoles={['buyer']}> <Layout><ProductListing /></Layout></ProtectedRoute>
       } />
-      <Route path='/buyer/product/:id' element={<ProductDetail/>} />
-      <Route path='/buyer/cart' element={<Cart />} />
-      <Route path="/buyer/checkout" element={<Checkout />} />
-      <Route path="/buyer/orders" element={<OrderList />} />
-      <Route path="/buyer/orders/:id" element={<OrderStatus />} />
+      
+      <Route path="/buyer/product/:id" element={<Layout><ProductDetail /></Layout>} />
+      <Route path="/buyer/cart" element={<Layout><Cart /></Layout>} />
+      <Route path="/buyer/checkout" element={<Layout><Checkout /></Layout>} />
+      <Route path="/buyer/orders" element={<Layout><OrderList /></Layout>} />
+      <Route path="/buyer/orders/:id" element={<Layout><OrderStatus /></Layout>} />
+      <Route path="/buyer/profile" element={
+        <ProtectedRoute allowedRoles={['buyer']}><Layout><Profile /></Layout></ProtectedRoute>
+      } />
       
       <Route path="/seller/dashboard" element={
-        <ProtectedRoute allowedRoles={['seller']}><SellerDashboard /></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['seller']}><Layout><SellerDashboard /></Layout></ProtectedRoute>
       } />
       <Route path="/agent/dashboard" element={
-        <ProtectedRoute allowedRoles={['agent']}><AgentDashboard /></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['agent']}><Layout><AgentDashboard /></Layout></ProtectedRoute>
       } />
     </Routes>
   )

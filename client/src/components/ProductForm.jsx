@@ -38,7 +38,7 @@ export default function ProductForm({ onProductAdded }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border p-4 rounded mb-6 space-y-3 max-w-md">
+    <form onSubmit={handleSubmit} className="bg-white border rounded-xl p-4 mb-6 space-y-3 max-w-md">
       <h3 className="font-bold text-lg">Add Product</h3>
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
@@ -55,8 +55,8 @@ export default function ProductForm({ onProductAdded }) {
 
       <input type="file" multiple accept="image/*" onChange={handleImageChange} className="border p-2 w-full" />
 
-      <button type="submit" disabled={loading} className="bg-blue-600 text-white px-4 py-2 w-full disabled:opacity-50">
-        {loading ? 'Adding...' : 'Add Product'}
+      <button type="submit" disabled={loading} className="text-white px-4 py-2 w-full rounded-lg font-medium disabled:opacity-50" style={{ backgroundColor: 'var(--brand)' }}>
+          {loading ? 'Adding...' : 'Add Product'}
       </button>
     </form>
   );

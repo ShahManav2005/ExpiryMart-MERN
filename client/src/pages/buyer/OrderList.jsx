@@ -1,6 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
+import EmptyState from '../../components/EmptyState';
+
+const statusColor = {
+  placed: 'var(--accent)',
+  confirmed: 'var(--brand)',
+  delivered: 'var(--brand-dark)',
+  cancelled: 'var(--danger)',
+};
 
 export default function OrderList() {
   const [orders, setOrders] = useState([]);
@@ -18,24 +26,46 @@ export default function OrderList() {
     fetchOrders();
   }, []);
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
+  if (loading) return <div className="max-w-3xl mx-auto px-4 py-10 text-center">Loading...</div>;
 
   return (
-    <div className="max-w-2xl mx-auto mt-10 px-4">
-      <h1 className="text-2xl font-bold mb-6">Your Orders</h1>
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+      <h1 className="font-display text-xl font-bold mb-4">Your Orders</h1>
       {orders.length === 0 ? (
-        <p className="text-gray-500">No orders yet.</p>
+        <EmptyState title="No orders yet" />
       ) : (
-        orders.map((order) => (
-          <Link
-            key={order._id}
-            to={`/buyer/orders/${order._id}`}
-            className="block border rounded p-3 mb-3"
-          >
-            <p className="font-bold">₹{order.totalAmount} — {order.orderStatus}</p>
-            <p className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
-          </Link>
-        ))
+        <div className="space-y-3">
+          {orders.map((order) => (
+            <Link
+              key={order._id}
+              to={`/buyer/orders/${order._id}`}
+              className="block rounded-2xl p-4"
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
+                  {new Date(order.createdAt).toLocaleDateString()} · #{order._id.slice(-6)}
+                </p>
+                <span
+                  className="text-xs font-semibold px-2 py-0.5 rounded-full text-white capitalize"
+                  style={{ background: statusColor[order.orderStatus] || 'var(--ink-muted)' }}
+                >
+                  {order.orderStatus}
+                </span>
+              </div>
+
+              <div className="text-sm space-y-0.5 mb-2">
+                {order.items.map((item, i) => (
+                  <p key={i} style={{ color: 'var(--ink-muted)' }}>
+                    {item.productId?.name || 'Product'} × {item.quantity}
+                  </p>
+                ))}
+              </div>
+
+              <p className="font-display font-bold tabular">₹{order.totalAmount}</p>
+            </Link>
+          ))}
+        </div>
       )}
     </div>
   );

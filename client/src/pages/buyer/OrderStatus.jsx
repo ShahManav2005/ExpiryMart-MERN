@@ -1,3 +1,4 @@
+// pages/buyer/OrderStatus.jsx
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../../api/axios';
@@ -11,8 +12,7 @@ export default function OrderStatus() {
     const fetchOrder = async () => {
       try {
         const { data } = await api.get('/orders/mine');
-        const found = data.find((o) => o._id === id);
-        setOrder(found);
+        setOrder(data.find((o) => o._id === id));
       } finally {
         setLoading(false);
       }
@@ -20,29 +20,30 @@ export default function OrderStatus() {
     fetchOrder();
   }, [id]);
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
-  if (!order) return <p className="text-center mt-10 text-red-500">Order not found</p>;
+  if (loading) return <div className="<div className='max-w-7xl px-4 sm:px-6 lg:px-8 text-center">Loading...</div>;
+  if (!order) return <div className="<div className='max-w-7xl px-4 sm:px-6 lg:px-8 text-center" style={{ color: 'var(--danger)' }}>Order not found</div>;
 
   return (
-    <div className="max-w-2xl mx-auto mt-10 px-4 text-center">
-      <h1 className="text-2xl font-bold mb-2">Order Placed!</h1>
-      <p className="text-gray-600 mb-6">Order ID: {order._id}</p>
+    <div className="<div className='max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+      <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl" style={{ background: 'var(--brand-light)' }}>✓</div>
+      <h1 className="font-display text-2xl font-bold mb-1">Order placed!</h1>
+      <p className="text-sm mb-6" style={{ color: 'var(--ink-muted)' }}>Order ID: {order._id}</p>
 
-      <div className="border rounded p-4 text-left">
-        <p className="font-bold mb-2">Status: <span className="text-blue-600">{order.orderStatus}</span></p>
+      <div className="rounded-2xl p-4 text-left" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+        <p className="font-semibold mb-2">Status: <span style={{ color: 'var(--brand)' }}>{order.orderStatus}</span></p>
         {order.items.map((item, i) => (
-          <div key={i} className="flex justify-between border-b py-2">
-            <span>{item.productId?.name || 'Product'} x {item.quantity}</span>
+          <div key={i} className="flex justify-between py-2 text-sm tabular" style={{ borderBottom: '1px solid var(--border)' }}>
+            <span>{item.productId?.name || 'Product'} × {item.quantity}</span>
             <span>₹{item.price * item.quantity}</span>
           </div>
         ))}
-        <div className="flex justify-between font-bold mt-2">
+        <div className="flex justify-between font-bold mt-2 tabular">
           <span>Total</span>
           <span>₹{order.totalAmount}</span>
         </div>
       </div>
 
-      <Link to="/buyer/orders" className="text-blue-600 mt-4 block">View all orders</Link>
+      <Link to="/buyer/orders" className="mt-4 inline-block font-semibold" style={{ color: 'var(--brand)' }}>View all orders</Link>
     </div>
   );
 }

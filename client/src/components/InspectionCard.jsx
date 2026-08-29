@@ -26,7 +26,7 @@ export default function InspectionCard({ inspection, onDecided }) {
   };
 
   return (
-    <div className="border rounded p-4 mb-4">
+    <div className="bg-white border rounded-xl p-4 mb-4">
       <div className="flex gap-4">
         {product.images?.[0] && (
           <img src={product.images[0]} alt={product.name} className="w-24 h-24 object-cover rounded" />
@@ -42,7 +42,8 @@ export default function InspectionCard({ inspection, onDecided }) {
         </div>
       </div>
 
-      <div className="mt-2">
+
+      <div className="bg-white border rounded-xl p-4 mb-4">
         <label className="text-sm text-gray-600">Confirm/override buying price:</label>
         <input
           type="number"
@@ -55,10 +56,10 @@ export default function InspectionCard({ inspection, onDecided }) {
       {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
       <div className="flex gap-2 mt-3">
-        <button onClick={() => handleDecision('approve')} disabled={loading} className="bg-green-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50">
+        <button onClick={() => handleDecision('approve')} disabled={loading} className="bg-green-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50">
           Approve
         </button>
-        <button onClick={() => handleDecision('reject')} disabled={loading} className="bg-red-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50">
+        <button onClick={() => handleDecision('reject')} disabled={loading} className="bg-red-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50">
           Reject
         </button>
       </div>

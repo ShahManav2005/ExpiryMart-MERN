@@ -5,7 +5,7 @@ const Product = require('../models/Product');
 // @access buyer only
 const createOrder = async (req, res) => {
   try {
-    const { items } = req.body; // [{ productId, quantity }]
+    const { items , paymentMethod } = req.body; // [{ productId, quantity }]
 
     if (!items || items.length === 0) {
       return res.status(400).json({ message: 'Cart is empty' });
@@ -47,6 +47,7 @@ const createOrder = async (req, res) => {
       items: orderItems,
       totalAmount,
       orderStatus: 'placed',
+      paymentMethod: paymentMethod || 'mock',
     });
 
     res.status(201).json(order);
