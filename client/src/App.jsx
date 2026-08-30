@@ -12,6 +12,7 @@ import OrderList from './pages/buyer/OrderList'
 import OrderStatus from './pages/buyer/OrderStatus'
 import Layout from './components/Layout'
 import Profile from './pages/buyer/Profile'
+import AgentProfile from './pages/agent/AgentProfile'
 
 function App() {
   return (
@@ -38,6 +39,9 @@ function App() {
       } />
       <Route path="/agent/dashboard" element={
         <ProtectedRoute allowedRoles={['agent']}><Layout><AgentDashboard /></Layout></ProtectedRoute>
+      } />
+      <Route path="/agent/profile" element={
+        <ProtectedRoute allowedRoles={['agent']}><Layout><AgentProfile /></Layout></ProtectedRoute>
       } />
     </Routes>
   )

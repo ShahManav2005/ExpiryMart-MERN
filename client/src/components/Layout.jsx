@@ -38,8 +38,12 @@ export default function Layout({ children }) {
               <Link to="/buyer/orders" className="font-medium" style={{ color: 'var(--ink)' }}>Orders</Link>
             )}
             {user?.role === 'buyer' && (
-  <Link to="/buyer/profile" className="font-medium" style={{ color: 'var(--ink)' }}>Profile</Link>
-)}
+              <Link to="/buyer/profile" className="font-medium" style={{ color: 'var(--ink)' }}>Profile</Link>
+            )}
+
+            {user?.role === 'agent' && (
+              <Link to="/agent/profile" className="font-medium" style={{ color: 'var(--ink)' }}>Profile</Link>
+            )}
             {user && (
               <>
                 <span className="hidden sm:inline" style={{ color: 'var(--ink-muted)' }}>{user.name}</span>

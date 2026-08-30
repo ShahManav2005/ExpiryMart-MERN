@@ -1,15 +1,17 @@
 const Inspection = require('../models/Inspection');
-const {validateProductForApproval } = require('../utils/inspectionRules')
-const { calculateRecommendedBuyingPrice , calculateSellingPrice, calculateAgentCommission } = require('../utils/pricingEngine');
-// const { validateProductForApproval } = require('../utils/inspectionRules');
+const { calculateRecommendedBuyingPrice, calculateSellingPrice, calculateAgentCommission } = require('../utils/pricingEngine');
+const { validateProductForApproval } = require('../utils/inspectionRules');
 
+const sellerPopulate = {
+  path: 'productId',
+  populate: { path: 'sellerId', select: 'name phone address shopName' },
+};
 
 // @route GET /api/inspections/pending
-// @access agent only — returns all pending inspection requests with product + seller info
 const getPendingInspections = async (req, res) => {
   try {
     const inspections = await Inspection.find({ status: 'pending' })
-      .populate('productId')
+      .populate(sellerPopulate)
       .sort({ createdAt: 1 });
 
     const withRecommendation = inspections.map((inspection) => {
@@ -23,12 +25,10 @@ const getPendingInspections = async (req, res) => {
   }
 };
 
-// @routes PUT api/inspections/:id/decision
-// @access agent only
-
+// @route PUT /api/inspections/:id/decision
 const decideInspection = async (req, res) => {
   try {
-    const { decision, notes, buyingPrice } = req.body; // buyingPrice optional — agent can override recommendation
+    const { decision, notes, buyingPrice } = req.body;
 
     if (!['approve', 'reject'].includes(decision)) {
       return res.status(400).json({ message: 'Decision must be "approve" or "reject"' });
@@ -53,7 +53,7 @@ const decideInspection = async (req, res) => {
       }
 
       const recommendation = calculateRecommendedBuyingPrice(product);
-      const finalBuyingPrice = buyingPrice ?? recommendation.buyingPrice; // agent's override or the recommendation
+      const finalBuyingPrice = buyingPrice ?? recommendation.buyingPrice;
 
       const { markupPercent, sellingPrice } = calculateSellingPrice(finalBuyingPrice, product.expiryDate);
       const agentCommission = calculateAgentCommission(sellingPrice);
@@ -69,7 +69,7 @@ const decideInspection = async (req, res) => {
       inspection.feeRefunded = true;
     } else {
       inspection.status = 'rejected';
-      inspection.feeRefunded = false; // simplification: any rejection is treated as non-refundable per your doc's default
+      inspection.feeRefunded = false;
       product.status = 'rejected';
     }
 
@@ -86,4 +86,68 @@ const decideInspection = async (req, res) => {
   }
 };
 
-module.exports = { getPendingInspections , decideInspection };
+// @route GET /api/inspections/awaiting-pickup
+const getAwaitingPickup = async (req, res) => {
+  try {
+    const inspections = await Inspection.find({
+      status: 'approved',
+      sellerPaid: false,
+      agentId: req.user._id,
+    })
+      .populate(sellerPopulate)
+      .sort({ inspectedAt: 1 });
+
+    res.json(inspections);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// @route PUT /api/inspections/:id/logistics
+const updateLogistics = async (req, res) => {
+  try {
+    const { pickupDate, sellerPaid } = req.body;
+
+    const inspection = await Inspection.findById(req.params.id);
+
+    if (!inspection) {
+      return res.status(404).json({ message: 'Inspection not found' });
+    }
+
+    if (inspection.agentId?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to update this inspection' });
+    }
+
+    if (pickupDate !== undefined) inspection.pickupDate = pickupDate;
+    if (sellerPaid !== undefined) inspection.sellerPaid = sellerPaid;
+
+    await inspection.save();
+    res.json(inspection);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// @route GET /api/inspections/history
+const getInspectionHistory = async (req, res) => {
+  try {
+    const inspections = await Inspection.find({
+      agentId: req.user._id,
+      $or: [{ status: 'rejected' }, { status: 'approved', sellerPaid: true }],
+    })
+      .populate(sellerPopulate)
+      .sort({ inspectedAt: -1 });
+
+    res.json(inspections);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = {
+  getPendingInspections,
+  decideInspection,
+  getAwaitingPickup,
+  updateLogistics,
+  getInspectionHistory,
+};
