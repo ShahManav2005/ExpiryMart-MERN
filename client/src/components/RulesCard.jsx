@@ -9,6 +9,7 @@ export default function RulesCard() {
         <li> <strong style={{ color: 'var(--ink)' }}>Expiry date visibility:</strong> the printed expiry date on the product must be clearly visible and legible before accepting it from the seller — do not approve if it's smudged, torn, or unreadable.</li>
         <li> <strong style={{ color: 'var(--ink)' }}>Your earning:</strong> 10% commission on the buyer's final selling price for every approved product.</li>
         <li> <strong style={{ color: 'var(--ink)' }}>Rejections</strong> forfeit the seller's ₹100 inspection fee; approvals refund it in full. Always note the specific reason.</li>
+        <li> <strong style={{ color: 'var(--ink)' }}>Your earning:</strong> paid per visit based on distance travelled from the city warehouse — ₹15 flat within 5km, plus ₹3/km beyond, for both inspection pickups and deliveries. Paid out daily.</li>
       </ul>
     </div>
   );

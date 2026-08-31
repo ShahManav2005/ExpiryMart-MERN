@@ -1,10 +1,17 @@
 import { useState } from 'react';
 import api from '../api/axios';
 
+const estimateEarning = (km) => {
+  const d = Number(km);
+  if (!d || d <= 0) return 0;
+  return d <= 5 ? 15 : 15 + (d - 5) * 3;
+};
+
 export default function PickupCard({ inspection, onUpdated }) {
   const product = inspection.productId;
   const seller = product?.sellerId;
   const [pickupDate, setPickupDate] = useState(inspection.pickupDate ? inspection.pickupDate.slice(0, 10) : '');
+  const [distanceKm, setDistanceKm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -27,12 +34,16 @@ export default function PickupCard({ inspection, onUpdated }) {
 
   const handleMarkPaid = async () => {
     setError('');
+    if (!distanceKm) {
+      setError('Enter distance travelled from the warehouse to log your visit earning');
+      return;
+    }
     setLoading(true);
     try {
-      await api.put(`/inspections/${inspection._id}/logistics`, { sellerPaid: true });
+      await api.put(`/inspections/${inspection._id}/logistics`, { sellerPaid: true, distanceKm });
       onUpdated(null, inspection._id);
     } catch (err) {
-      setError('Failed to mark as paid');
+      setError(err.response?.data?.message || 'Failed to mark as paid');
     } finally {
       setLoading(false);
     }
@@ -73,9 +84,31 @@ export default function PickupCard({ inspection, onUpdated }) {
         <button onClick={handleSaveDate} disabled={loading || !pickupDate} className="px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50" style={{ border: '1.5px solid var(--brand)', color: 'var(--brand)' }}>
           Save date
         </button>
-        <button onClick={handleMarkPaid} disabled={loading} className="text-white px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 ml-auto" style={{ background: 'var(--brand)' }}>
-          Mark paid to seller
-        </button>
+      </div>
+
+      <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+        <p className="text-sm font-semibold mb-2">Complete pickup & pay seller</p>
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label className="text-sm font-medium block mb-1">Distance from warehouse (km)</label>
+            <input
+              type="number"
+              value={distanceKm}
+              onChange={(e) => setDistanceKm(e.target.value)}
+              placeholder="e.g. 7.5"
+              className="border rounded-lg p-2 text-sm w-32"
+              style={{ borderColor: 'var(--border)' }}
+            />
+          </div>
+          {distanceKm > 0 && (
+            <p className="text-sm" style={{ color: 'var(--brand)' }}>
+              You'll earn ₹{estimateEarning(distanceKm).toFixed(0)} for this visit
+            </p>
+          )}
+          <button onClick={handleMarkPaid} disabled={loading} className="text-white px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 ml-auto" style={{ background: 'var(--brand)' }}>
+            Mark paid to seller
+          </button>
+        </div>
       </div>
 
       {error && <p className="text-sm mt-2" style={{ color: 'var(--danger)' }}>{error}</p>}

@@ -14,7 +14,7 @@ const getExperience = (createdAt) => {
 
 export default function AgentProfile() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({ approved: 0, rejected: 0, commissionEarned: 0 });
+  const [stats, setStats] = useState({ approved: 0, rejected: 0, totalEarned: 0 });
   const [loadingStats, setLoadingStats] = useState(true);
 
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -23,19 +23,21 @@ export default function AgentProfile() {
   const [pwLoading, setPwLoading] = useState(false);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const { data } = await api.get('/inspections/history');
-        const approved = data.filter((i) => i.status === 'approved');
-        const rejected = data.filter((i) => i.status === 'rejected');
-        const commissionEarned = approved.reduce((sum, i) => sum + (i.agentCommission || 0), 0);
-        setStats({ approved: approved.length, rejected: rejected.length, commissionEarned });
-      } finally {
-        setLoadingStats(false);
-      }
-    };
-    fetchStats();
-  }, []);
+  const fetchStats = async () => {
+    try {
+      const [historyRes, earningsRes] = await Promise.all([
+        api.get('/inspections/history'),
+        api.get('/earnings/summary'),
+      ]);
+      const approved = historyRes.data.filter((i) => i.status === 'approved');
+      const rejected = historyRes.data.filter((i) => i.status === 'rejected');
+      setStats({ approved: approved.length, rejected: rejected.length, totalEarned: earningsRes.data.grandTotal });
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+  fetchStats();
+}, []);
 
   const handlePasswordChange = (e) => setPasswords({ ...passwords, [e.target.name]: e.target.value });
 
@@ -98,8 +100,8 @@ export default function AgentProfile() {
               <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>Rejected</p>
             </div>
             <div className="rounded-xl p-3" style={{ background: '#FFFBEB' }}>
-              <p className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>₹{stats.commissionEarned}</p>
-              <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>Commission earned</p>
+                <p className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>₹{stats.totalEarned}</p>
+                <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>Total earned</p>
             </div>
           </div>
         )}

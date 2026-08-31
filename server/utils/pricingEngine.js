@@ -42,11 +42,17 @@ const calculateCompanyProfit = (sellingPrice, buyingPrice, agentCommission, deli
   return sellingPrice - buyingPrice - agentCommission - deliveryEarning;
 };
 
+const calculateDeliveryEarning = (distanceKm = 0) => {
+  if (distanceKm <= 5) return DELIVERY_FLAT_EARNING;
+  return DELIVERY_FLAT_EARNING + (distanceKm - 5) * 3;
+};
+
 module.exports = {
   getDaysLeft,
   calculateRecommendedBuyingPrice,
   calculateSellingPrice,
   calculateAgentCommission,
   calculateCompanyProfit,
+  calculateDeliveryEarning,
   DELIVERY_FLAT_EARNING,
 };

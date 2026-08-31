@@ -1,5 +1,6 @@
+// console.log('FILE RELOADED - TEST');
 const Inspection = require('../models/Inspection');
-const { calculateRecommendedBuyingPrice, calculateSellingPrice, calculateAgentCommission } = require('../utils/pricingEngine');
+const { calculateRecommendedBuyingPrice, calculateSellingPrice, calculateAgentCommission, calculateDeliveryEarning } = require('../utils/pricingEngine');
 const { validateProductForApproval } = require('../utils/inspectionRules');
 
 const sellerPopulate = {
@@ -7,7 +8,6 @@ const sellerPopulate = {
   populate: { path: 'sellerId', select: 'name phone address shopName' },
 };
 
-// @route GET /api/inspections/pending
 const getPendingInspections = async (req, res) => {
   try {
     const inspections = await Inspection.find({ status: 'pending' })
@@ -21,11 +21,11 @@ const getPendingInspections = async (req, res) => {
 
     res.json(withRecommendation);
   } catch (err) {
+    console.error(err)
     res.status(500).json({ message: err.message });
   }
 };
 
-// @route PUT /api/inspections/:id/decision
 const decideInspection = async (req, res) => {
   try {
     const { decision, notes, buyingPrice } = req.body;
@@ -35,11 +35,7 @@ const decideInspection = async (req, res) => {
     }
 
     const inspection = await Inspection.findById(req.params.id).populate('productId');
-
-    if (!inspection) {
-      return res.status(404).json({ message: 'Inspection not found' });
-    }
-
+    if (!inspection) return res.status(404).json({ message: 'Inspection not found' });
     if (inspection.status !== 'pending') {
       return res.status(400).json({ message: 'This inspection has already been decided' });
     }
@@ -48,13 +44,10 @@ const decideInspection = async (req, res) => {
 
     if (decision === 'approve') {
       const { valid, errors } = validateProductForApproval(product);
-      if (!valid) {
-        return res.status(400).json({ message: 'Approval blocked by rules', errors });
-      }
+      if (!valid) return res.status(400).json({ message: 'Approval blocked by rules', errors });
 
       const recommendation = calculateRecommendedBuyingPrice(product);
       const finalBuyingPrice = buyingPrice ?? recommendation.buyingPrice;
-
       const { markupPercent, sellingPrice } = calculateSellingPrice(finalBuyingPrice, product.expiryDate);
       const agentCommission = calculateAgentCommission(sellingPrice);
 
@@ -82,53 +75,54 @@ const decideInspection = async (req, res) => {
 
     res.json({ inspection, product });
   } catch (err) {
+    console.error(err)
     res.status(500).json({ message: err.message });
   }
 };
 
-// @route GET /api/inspections/awaiting-pickup
 const getAwaitingPickup = async (req, res) => {
   try {
-    const inspections = await Inspection.find({
-      status: 'approved',
-      sellerPaid: false,
-      agentId: req.user._id,
-    })
+    const inspections = await Inspection.find({ status: 'approved', sellerPaid: false, agentId: req.user._id })
       .populate(sellerPopulate)
       .sort({ inspectedAt: 1 });
-
     res.json(inspections);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// @route PUT /api/inspections/:id/logistics
 const updateLogistics = async (req, res) => {
   try {
-    const { pickupDate, sellerPaid } = req.body;
+    const { pickupDate, sellerPaid, distanceKm } = req.body;
 
     const inspection = await Inspection.findById(req.params.id);
-
-    if (!inspection) {
-      return res.status(404).json({ message: 'Inspection not found' });
-    }
-
+    if (!inspection) return res.status(404).json({ message: 'Inspection not found' });
     if (inspection.agentId?.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized to update this inspection' });
     }
 
     if (pickupDate !== undefined) inspection.pickupDate = pickupDate;
-    if (sellerPaid !== undefined) inspection.sellerPaid = sellerPaid;
+
+    if (sellerPaid !== undefined) {
+      if (sellerPaid && (distanceKm === undefined || distanceKm === '')) {
+        return res.status(400).json({ message: 'Distance travelled is required to log your visit earning' });
+      }
+      inspection.sellerPaid = sellerPaid;
+      if (sellerPaid) {
+        inspection.distanceKm = Number(distanceKm);
+        inspection.visitEarning = calculateDeliveryEarning(Number(distanceKm));
+        inspection.paidAt = new Date();
+      }
+    }
 
     await inspection.save();
     res.json(inspection);
   } catch (err) {
+    console.error(err)
     res.status(500).json({ message: err.message });
   }
 };
 
-// @route GET /api/inspections/history
 const getInspectionHistory = async (req, res) => {
   try {
     const inspections = await Inspection.find({
@@ -137,17 +131,11 @@ const getInspectionHistory = async (req, res) => {
     })
       .populate(sellerPopulate)
       .sort({ inspectedAt: -1 });
-
     res.json(inspections);
   } catch (err) {
+    console.error(err)
     res.status(500).json({ message: err.message });
   }
 };
 
-module.exports = {
-  getPendingInspections,
-  decideInspection,
-  getAwaitingPickup,
-  updateLogistics,
-  getInspectionHistory,
-};
+module.exports = { getPendingInspections, decideInspection, getAwaitingPickup, updateLogistics, getInspectionHistory };

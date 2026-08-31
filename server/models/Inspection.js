@@ -13,6 +13,9 @@ const inspectionSchema = new mongoose.Schema({
   feeRefunded: { type: Boolean },
   pickupDate: { type: Date },
   sellerPaid: { type: Boolean, default: false },
+  distanceKm: { type: Number },
+  visitEarning: { type: Number },
+  paidAt: { type: Date },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Inspection', inspectionSchema);

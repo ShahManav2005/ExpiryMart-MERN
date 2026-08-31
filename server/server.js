@@ -9,6 +9,7 @@ const authRoutes = require('./routes/authRoutes')
 const productRoutes = require('./routes/productRoutes')
 const inspectionRoutes = require('./routes/inspectionRoutes')
 const orderRoutes = require('./routes/orderRoutes')
+const earningsRoutes = require('./routes/earningsRoutes')
 
 connectDB();
 
@@ -22,6 +23,7 @@ app.use('/api/auth',authRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/inspections' , inspectionRoutes)
 app.use('/api/orders',orderRoutes);
+app.use('/api/earnings', earningsRoutes);
 
 app.get('/', (req, res) => res.send('ExpiryMart API running'));
 
