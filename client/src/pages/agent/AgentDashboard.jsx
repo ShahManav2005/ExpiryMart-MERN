@@ -12,6 +12,7 @@ const tabs = [
   { id: 'pickups', label: 'Scheduled Pickups' },
   { id: 'deliveries', label: 'Deliveries' },
   { id: 'earnings', label: "Today's Earnings" },
+  { id: 'allEarnings', label: 'All Earnings' },
   { id: 'history', label: 'History' },
 ];
 
@@ -22,23 +23,27 @@ export default function AgentDashboard() {
   const [deliveries, setDeliveries] = useState([]);
   const [earnings, setEarnings] = useState(null);
   const [history, setHistory] = useState([]);
+  const [allEarnings, setAllEarnings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [pendingRes, pickupRes, deliveryRes, earningsRes, historyRes] = await Promise.all([
+      const [pendingRes, pickupRes, deliveryRes, earningsRes, allEarningsRes, historyRes] = await Promise.all([
         api.get('/inspections/pending'),
         api.get('/inspections/awaiting-pickup'),
         api.get('/orders/delivery-queue'),
         api.get('/earnings/today'),
+        api.get('/earnings/history'),
         api.get('/inspections/history'),
       ]);
+
       setInspections(pendingRes.data);
       setPickups(pickupRes.data);
       setDeliveries(deliveryRes.data);
       setEarnings(earningsRes.data);
+      setAllEarnings(allEarningsRes.data);
       setHistory(historyRes.data);
     } catch (err) {
       setError('Failed to load agent data');
@@ -173,6 +178,31 @@ export default function AgentDashboard() {
               )}
             </div>
           )}
+
+        {activeTab === 'allEarnings' && allEarnings && (
+          <div>
+            <div className="rounded-xl p-4 mb-4 text-center" style={{ background: 'var(--brand-light)' }}>
+              <p className="font-display font-bold text-2xl" style={{ color: 'var(--brand)' }}>₹{allEarnings.grandTotal}</p>
+              <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>Total earned all-time · {allEarnings.count} visits</p>
+            </div>
+
+            {allEarnings.entries.length === 0 ? (
+              <EmptyState title="No earnings yet" subtitle="Complete a pickup or delivery to start earning" />
+            ) : (
+              <div className="space-y-2">
+                {allEarnings.entries.map((e, i) => (
+                  <div key={i} className="flex justify-between items-center text-sm p-3 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                    <div>
+                      <p className="font-medium capitalize">{e.type} · {e.label}</p>
+                      <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>{new Date(e.date).toLocaleDateString()} · {e.distanceKm}km</p>
+                    </div>
+                    <span className="font-semibold tabular" style={{ color: 'var(--brand)' }}>₹{e.earning}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
           {activeTab === 'history' && (
             history.length === 0 ? (

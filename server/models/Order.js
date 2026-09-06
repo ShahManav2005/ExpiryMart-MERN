@@ -7,6 +7,7 @@ const orderSchema = new mongoose.Schema({
         quantity : { type : Number , required : true},
         price : {type : Number , required : true}
     }],
+    deliveryCharge: { type: Number, default: 0 },
     totalAmount : {type : Number , required : true},
     orderStatus : {
         type : String , 
@@ -20,6 +21,7 @@ const orderSchema = new mongoose.Schema({
         enum: ['pending', 'delivered'],
         default: 'pending',
     },
+    deliveryAddress: { type: String },
     deliveryDistanceKm: { type: Number },
     deliveryEarning: { type: Number },
     deliveredAt: { type: Date },

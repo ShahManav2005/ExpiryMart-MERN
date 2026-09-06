@@ -1,16 +1,25 @@
 const Product = require('../models/Product');
 const Inspection = require('../models/Inspection')
-const { getDaysLeft } = require('../utils/pricingEngine');
+const { getDaysLeft , calculateCurrentSellingPrice } = require('../utils/pricingEngine');
 
 
 //@route POST /api/products
 //@access seller only
 
-const createProduct = async (req , res) => {
-    try{
-        const {name,category,quantity,expiryDate,price} = req.body;
+const createProduct = async (req, res) => {
+    try {
+        const { name, category, quantity, expiryDate, price, inspectionFeeMethod } = req.body;
+
+        if (!['card', 'upi'].includes(inspectionFeeMethod)) {
+            return res.status(400).json({ message: 'Inspection fee must be paid via Card or UPI' });
+        }
 
         const imageUrls = req.files ? req.files.map(file => file.path) : [];
+
+        const totalMRP = Number(price) * Number(quantity);
+        if (totalMRP < 200) {
+        return res.status(400).json({ message: `Total MRP must be at least ₹200. Current total: ₹${totalMRP}` });
+        }
 
         const product = await Product.create({
             name,
@@ -18,19 +27,23 @@ const createProduct = async (req , res) => {
             quantity,
             expiryDate,
             price,
-            images : imageUrls,
+            totalMRP,
+            images: imageUrls,
             sellerId: req.user._id,
+            inspectionFeePaid: true,
+            inspectionFeeMethod,
         });
 
-        //auto-create the matching inspection request
+        const Inspection = require('../models/Inspection');
         await Inspection.create({
-            productId : product._id,
-            status : 'pending'
-        })
+            productId: product._id,
+            status: 'pending',
+        });
 
         res.status(201).json(product);
-    }catch(err){
-        res.status(500).json({message : err.message});
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: err.message });
     }
 }
 
@@ -137,8 +150,8 @@ const getListedProducts = async (req,res) => {
         }
 
         if(maxDayToExpiry){
-            const cutofDate = new Date();
-            cutoffDates.setDate(cutoffDate.getDate() + Number(maxDaysToExpriry));
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() + Number(maxDayToExpiry));
             filter.expiryDate = { $lte : cutoffDate};
         }
 
@@ -149,7 +162,14 @@ const getListedProducts = async (req,res) => {
 
         const products = await Product.find(filter).sort({expiryDate : 1})  //soonest-expriry first
 
-        res.json(products)
+        const withCurrentPricing = products
+        .filter((p) => p.buyingPricePerUnit) // hide legacy/broken records missing pricing data
+        .map((p) => {
+            const { sellingPricePerUnit, daysLeft } = calculateCurrentSellingPrice(p.buyingPricePerUnit, p.expiryDate);
+            return { ...p.toObject(), sellingPrice: sellingPricePerUnit, daysLeft };
+        });
+
+        res.json(withCurrentPricing)
     }catch(err){
         res.status(500).json({message : err.message})
     }
@@ -161,13 +181,42 @@ const getPublicProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
 
-    if (!product || product.status !== 'listed') {
+    if (!product || product.status !== 'listed' || !product.buyingPricePerUnit) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    const daysLeft = getDaysLeft(product.expiryDate);
+    const { sellingPricePerUnit, daysLeft } = calculateCurrentSellingPrice(product.buyingPricePerUnit, product.expiryDate);
+    res.json({ ...product.toObject(), sellingPrice: sellingPricePerUnit, daysLeft });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
-    res.json({ ...product.toObject(), daysLeft });
+// @route GET /api/products/mine/summary
+// @access seller only
+const getMySalesSummary = async (req, res) => {
+  try {
+    const products = await Product.find({ sellerId: req.user._id }).sort({ createdAt: -1 });
+
+    const pending = products.filter((p) => p.status === 'pending_inspection');
+    const awaitingPickup = products.filter((p) => p.status === 'approved');
+    const listed = products.filter((p) => p.status === 'listed');
+    const sold = products.filter((p) => p.status === 'sold');
+    const rejected = products.filter((p) => p.status === 'rejected');
+
+    const totalEarned = [...listed, ...sold].reduce((sum, p) => sum + (p.sellerNetPayout || 0), 0);
+
+    res.json({
+      products,
+      counts: {
+        pending: pending.length,
+        awaitingPickup: awaitingPickup.length,
+        listed: listed.length,
+        sold: sold.length,
+        rejected: rejected.length,
+      },
+      totalEarned,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -180,5 +229,6 @@ module.exports = {
     updateProduct,
     deleteProduct,
     getListedProducts,
-    getPublicProductById
+    getPublicProductById,
+    getMySalesSummary
 }

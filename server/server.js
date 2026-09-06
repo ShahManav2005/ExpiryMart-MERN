@@ -25,6 +25,13 @@ app.use('/api/inspections' , inspectionRoutes)
 app.use('/api/orders',orderRoutes);
 app.use('/api/earnings', earningsRoutes);
 
+
+app.use((err, req, res, next) => {
+  console.error('UNHANDLED ERROR:', err);
+  res.status(500).json({ message: err.message || 'Server error' });
+});
+
+
 app.get('/', (req, res) => res.send('ExpiryMart API running'));
 
 const PORT = process.env.PORT || 5000;

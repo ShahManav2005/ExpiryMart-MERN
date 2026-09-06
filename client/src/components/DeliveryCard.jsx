@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import api from '../api/axios';
 
-const estimateEarning = (km) => {
+const previewCharge = (km) => {
   const d = Number(km);
-  if (!d || d <= 0) return 0;
-  return d <= 5 ? 15 : 15 + (d - 5) * 3;
+  if (!d || d <= 0) return null;
+  if (d > 8.75) return { charge: 0, rejected: true };
+  if (d >= 5.01) return { charge: 20, rejected: false };
+  if (d >= 3.76) return { charge: 10, rejected: false };
+  return { charge: 0, rejected: false };
 };
 
 export default function DeliveryCard({ order, onDelivered }) {
@@ -14,11 +17,16 @@ export default function DeliveryCard({ order, onDelivered }) {
   const [error, setError] = useState('');
 
   const cardStyle = { background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' };
+  const preview = previewCharge(distanceKm);
 
   const handleDeliver = async () => {
     setError('');
     if (!distanceKm) {
-      setError('Enter distance travelled from the warehouse to log your delivery earning');
+      setError('Enter distance from warehouse to complete delivery');
+      return;
+    }
+    if (preview?.rejected) {
+      setError('Distance exceeds the 8.75km limit — this delivery cannot be completed.');
       return;
     }
     setLoading(true);
@@ -58,21 +66,24 @@ export default function DeliveryCard({ order, onDelivered }) {
       <div className="flex flex-wrap items-end gap-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
         <div>
           <label className="text-sm font-medium block mb-1">Distance from warehouse (km)</label>
-          <input
-            type="number"
-            value={distanceKm}
-            onChange={(e) => setDistanceKm(e.target.value)}
-            placeholder="e.g. 4.2"
-            className="border rounded-lg p-2 text-sm w-32"
-            style={{ borderColor: 'var(--border)' }}
-          />
+          <input type="number" step="0.01" value={distanceKm} onChange={(e) => setDistanceKm(e.target.value)} placeholder="e.g. 4" className="border rounded-lg p-2 text-sm w-32" style={{ borderColor: 'var(--border)' }} />
         </div>
-        {distanceKm > 0 && (
-          <p className="text-sm" style={{ color: 'var(--brand)' }}>
-            You'll earn ₹{estimateEarning(distanceKm).toFixed(0)} for this delivery
+        {preview && !preview.rejected && (
+          <div className="text-sm">
+            <p style={{ color: 'var(--ink-muted)' }}>
+              {preview.charge > 0 ? `Buyer delivery charge: ₹${preview.charge}` : 'Free delivery (within 3.75km)'}
+            </p>
+            <p style={{ color: 'var(--brand)' }}>
+              You'll earn ₹{30 + preview.charge} for this pickup (₹30 base{preview.charge > 0 ? ` + ₹${preview.charge} distance charge` : ''})
+            </p>
+          </div>
+        )}
+        {preview?.rejected && (
+          <p className="text-sm font-semibold" style={{ color: 'var(--danger)' }}>
+            Exceeds 8.75km limit — cannot be completed
           </p>
         )}
-        <button onClick={handleDeliver} disabled={loading} className="text-white px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 ml-auto" style={{ background: 'var(--brand)' }}>
+        <button onClick={handleDeliver} disabled={loading || preview?.rejected} className="text-white px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 ml-auto" style={{ background: 'var(--brand)' }}>
           Mark delivered
         </button>
       </div>

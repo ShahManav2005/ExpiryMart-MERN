@@ -14,6 +14,7 @@ const inspectionSchema = new mongoose.Schema({
   pickupDate: { type: Date },
   sellerPaid: { type: Boolean, default: false },
   distanceKm: { type: Number },
+  distanceCharge: { type: Number },
   visitEarning: { type: Number },
   paidAt: { type: Date },
 }, { timestamps: true });

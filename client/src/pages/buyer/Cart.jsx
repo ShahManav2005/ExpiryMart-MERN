@@ -39,7 +39,7 @@ export default function Cart() {
                 <p className="text-xs tabular" style={{ color: 'var(--ink-muted)' }}>₹{item.price} each</p>
               </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6">
+              <div>
                 <input
                   type="number"
                   min="1"
@@ -49,7 +49,8 @@ export default function Cart() {
                   className="border rounded-lg w-16 p-1.5 text-center text-sm"
                   style={{ borderColor: 'var(--border)' }}
                 />
-                <p className="w-16 text-right text-sm font-semibold tabular">₹{item.price * item.quantity}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>Max {item.maxQuantity}</p>
+
                 <button onClick={() => removeFromCart(item.productId)} className="text-xs font-medium" style={{ color: 'var(--danger)' }}>
                   Remove
                 </button>
@@ -75,13 +76,21 @@ export default function Cart() {
             <span>₹{totalAmount}</span>
           </div>
 
-          <Link
-            to="/buyer/checkout"
-            className="text-white px-4 py-3 rounded-xl w-full mt-5 block text-center font-semibold"
-            style={{ background: 'var(--brand)' }}
-          >
-            Proceed to Checkout
-          </Link>
+          {totalAmount < 200 && (
+              <p className="text-sm mt-2" style={{ color: 'var(--danger)' }}>
+                Minimum cart value is ₹200 — add ₹{200 - totalAmount} more to checkout.
+              </p>
+            )}
+
+            <Link
+              to={totalAmount >= 200 ? "/buyer/checkout" : "#"}
+              onClick={(e) => { if (totalAmount < 200) e.preventDefault(); }}
+              className="text-white px-4 py-3 rounded-xl w-full mt-4 block text-center font-semibold"
+              style={{ background: totalAmount >= 200 ? 'var(--brand)' : 'var(--ink-muted)', cursor: totalAmount < 200 ? 'not-allowed' : 'pointer' }}
+            >
+              Proceed to Checkout
+            </Link>
+            <p className="text-xs mb-2" style={{ color: 'var(--ink-muted)' }}>Minimum order value: ₹200</p>
         </div>
       </div>
     </div>

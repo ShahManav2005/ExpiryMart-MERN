@@ -1,6 +1,7 @@
 // console.log('FILE RELOADED - TEST');
 const Inspection = require('../models/Inspection');
-const { calculateRecommendedBuyingPrice, calculateSellingPrice, calculateAgentCommission, calculateDeliveryEarning } = require('../utils/pricingEngine');
+const Product = require('../models/Product');
+const { calculateRecommendedBuyingPrice, calculateSellingPrice, calculateAgentCommission, calculateDeliveryEarning , calculateDistanceCharge, AGENT_FLAT_PAY } = require('../utils/pricingEngine');
 const { validateProductForApproval } = require('../utils/inspectionRules');
 
 const sellerPopulate = {
@@ -47,18 +48,20 @@ const decideInspection = async (req, res) => {
       if (!valid) return res.status(400).json({ message: 'Approval blocked by rules', errors });
 
       const recommendation = calculateRecommendedBuyingPrice(product);
-      const finalBuyingPrice = buyingPrice ?? recommendation.buyingPrice;
-      const { markupPercent, sellingPrice } = calculateSellingPrice(finalBuyingPrice, product.expiryDate);
-      const agentCommission = calculateAgentCommission(sellingPrice);
 
-      product.buyingPrice = finalBuyingPrice;
-      product.sellingPrice = sellingPrice;
-      product.status = 'listed';
+      const numericBuyingPrice = Number(buyingPrice);
+      const finalTotalBuyingPrice = (buyingPrice && !isNaN(numericBuyingPrice) && numericBuyingPrice > 0)
+        ? numericBuyingPrice
+        : recommendation.totalBuyingPrice;
+      
+      const buyingPricePerUnit = finalTotalBuyingPrice / product.quantity;
+
+      product.totalBuyingPrice = finalTotalBuyingPrice;
+      product.buyingPricePerUnit = buyingPricePerUnit;
+      product.status = 'approved'; 
 
       inspection.status = 'approved';
       inspection.buyingPricePercent = recommendation.percent;
-      inspection.markupPercent = markupPercent;
-      inspection.agentCommission = agentCommission;
       inspection.feeRefunded = true;
     } else {
       inspection.status = 'rejected';
@@ -91,6 +94,7 @@ const getAwaitingPickup = async (req, res) => {
   }
 };
 
+
 const updateLogistics = async (req, res) => {
   try {
     const { pickupDate, sellerPaid, distanceKm } = req.body;
@@ -104,21 +108,51 @@ const updateLogistics = async (req, res) => {
     if (pickupDate !== undefined) inspection.pickupDate = pickupDate;
 
     if (sellerPaid !== undefined) {
-      if (sellerPaid && (distanceKm === undefined || distanceKm === '')) {
-        return res.status(400).json({ message: 'Distance travelled is required to log your visit earning' });
+       if (sellerPaid && inspection.sellerPaid) {
+        return res.status(400).json({ message: 'This pickup has already been paid' });
       }
-      inspection.sellerPaid = sellerPaid;
+      if (sellerPaid && (distanceKm === undefined || distanceKm === '')) {
+        return res.status(400).json({ message: 'Distance from warehouse is required to complete pickup' });
+      }
+
       if (sellerPaid) {
+        
+        const product = await Product.findById(inspection.productId);
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+
+        if (!product.totalBuyingPrice || isNaN(product.totalBuyingPrice)) {
+          return res.status(400).json({
+            message: 'This product has invalid pricing data and cannot be paid out. Please contact support or re-approve it.',
+          });
+        }
+
+        const { charge, rejected } = calculateDistanceCharge(distanceKm);
+        if (rejected) {
+          return res.status(400).json({
+            message: `Distance (${distanceKm}km) exceeds the 8.75km limit. This pickup cannot be completed — please reassign to a closer agent.`,
+          });
+        }
+
+        
+
+        product.sellerDistanceCharge = charge;
+        product.sellerNetPayout = product.totalBuyingPrice - charge;
+        product.status = 'listed'; 
+        await product.save();
+
+        inspection.sellerPaid = true;
         inspection.distanceKm = Number(distanceKm);
-        inspection.visitEarning = calculateDeliveryEarning(Number(distanceKm));
+        inspection.distanceCharge = charge;
+        inspection.visitEarning = AGENT_FLAT_PAY + charge; // ExpiryMart's ₹30 + the seller's distance charge
         inspection.paidAt = new Date();
       }
     }
 
     await inspection.save();
-    res.json(inspection);
+    const populated = await inspection.populate(sellerPopulate);
+    res.json(populated);
   } catch (err) {
-    console.error(err)
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -137,5 +171,7 @@ const getInspectionHistory = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+
 
 module.exports = { getPendingInspections, decideInspection, getAwaitingPickup, updateLogistics, getInspectionHistory };

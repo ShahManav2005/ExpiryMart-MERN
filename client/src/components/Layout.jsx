@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import Footer from './Footer';
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
@@ -44,6 +45,14 @@ export default function Layout({ children }) {
             {user?.role === 'agent' && (
               <Link to="/agent/profile" className="font-medium" style={{ color: 'var(--ink)' }}>Profile</Link>
             )}
+            
+            {user?.role === 'seller' && (
+                <Link to="/seller/history" className="font-medium" style={{ color: 'var(--ink)' }}>History</Link>
+              )}
+              {user?.role === 'seller' && (
+                <Link to="/seller/profile" className="font-medium" style={{ color: 'var(--ink)' }}>Profile</Link>
+              )}
+
             {user && (
               <>
                 <span className="hidden sm:inline" style={{ color: 'var(--ink-muted)' }}>{user.name}</span>
@@ -57,6 +66,7 @@ export default function Layout({ children }) {
       </header>
 
       <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   );
 }

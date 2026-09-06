@@ -10,7 +10,8 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [added, setAdded] = useState(false);
+  const [added, setAdded] = useState(false);  
+  const [qty, setQty] = useState(1);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -32,9 +33,9 @@ export default function ProductDetail() {
   const discountPercent = Math.round((1 - product.sellingPrice / product.price) * 100);
 
   const handleAddToCart = () => {
-    addToCart(product, { discountedPrice: product.sellingPrice });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
+  addToCart(product, { discountedPrice: product.sellingPrice }, qty);
+  setAdded(true);
+  setTimeout(() => setAdded(false), 1500);
   };
 
   return (
@@ -71,6 +72,16 @@ export default function ProductDetail() {
             <p>Quantity available: <strong>{product.quantity}</strong></p>
             <p>Expires: <strong>{new Date(product.expiryDate).toLocaleDateString()}</strong></p>
             <p>{product.daysLeft} days remaining before expiry</p>
+          </div>
+
+          <div className="flex items-center gap-3 mt-5">
+            <span className="text-sm font-medium">Quantity:</span>
+            <div className="flex items-center rounded-lg" style={{ border: '1px solid var(--border)' }}>
+              <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="px-3 py-1.5 text-lg">−</button>
+              <span className="px-4 tabular">{qty}</span>
+              <button type="button" onClick={() => setQty((q) => Math.min(product.quantity, q + 1))} className="px-3 py-1.5 text-lg">+</button>
+            </div>
+            <span className="text-xs" style={{ color: 'var(--ink-muted)' }}>{product.quantity} available</span>
           </div>
 
           <button

@@ -13,6 +13,9 @@ import OrderStatus from './pages/buyer/OrderStatus'
 import Layout from './components/Layout'
 import Profile from './pages/buyer/Profile'
 import AgentProfile from './pages/agent/AgentProfile'
+import AddProduct from './pages/seller/AddProduct'
+import SalesHistory from './pages/seller/SalesHistory'
+import SellerProfile from './pages/seller/SellerProfile'
 
 function App() {
   return (
@@ -37,6 +40,16 @@ function App() {
       <Route path="/seller/dashboard" element={
         <ProtectedRoute allowedRoles={['seller']}><Layout><SellerDashboard /></Layout></ProtectedRoute>
       } />
+      <Route path="/seller/add-product" element={
+        <ProtectedRoute allowedRoles={['seller']}><Layout><AddProduct /></Layout></ProtectedRoute>
+      } />
+      <Route path="/seller/history" element={
+        <ProtectedRoute allowedRoles={['seller']}><Layout><SalesHistory /></Layout></ProtectedRoute>
+      } />
+      <Route path="/seller/profile" element={
+        <ProtectedRoute allowedRoles={['seller']}><Layout><SellerProfile /></Layout></ProtectedRoute>
+      } />
+
       <Route path="/agent/dashboard" element={
         <ProtectedRoute allowedRoles={['agent']}><Layout><AgentDashboard /></Layout></ProtectedRoute>
       } />

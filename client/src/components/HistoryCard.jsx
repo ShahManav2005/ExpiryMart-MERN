@@ -23,10 +23,10 @@ export default function HistoryCard({ inspection }) {
           Decided: {new Date(inspection.inspectedAt).toLocaleDateString()}
         </p>
         {inspection.status === 'approved' && (
-          <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-            Bought at ₹{product.buyingPrice} · Commission earned: ₹{inspection.agentCommission}
-          </p>
-        )}
+            <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
+              Paid to seller: ₹{product.sellerNetPayout ?? product.totalBuyingPrice} · Your earning: ₹{inspection.visitEarning}
+            </p>
+          )}
         {inspection.status === 'rejected' && inspection.notes && (
           <p className="text-xs mt-1 italic" style={{ color: 'var(--ink-muted)' }}>
             "{inspection.notes}"

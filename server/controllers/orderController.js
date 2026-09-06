@@ -1,21 +1,21 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
-const { calculateDeliveryEarning } = require('../utils/pricingEngine');
+const { calculateDeliveryEarning , calculateCurrentSellingPrice ,calculateDistanceCharge ,AGENT_FLAT_PAY} = require('../utils/pricingEngine');
+
 
 const createOrder = async (req, res) => {
   try {
-    const { items, paymentMethod } = req.body;
-
+    const { items, paymentMethod , deliveryAddress} = req.body;
     if (!items || items.length === 0) {
       return res.status(400).json({ message: 'Cart is empty' });
     }
 
     let totalAmount = 0;
     const orderItems = [];
+    const productsToUpdate = [];
 
     for (const cartItem of items) {
       const product = await Product.findById(cartItem.productId);
-
       if (!product || product.status !== 'listed') {
         return res.status(400).json({ message: `Product ${cartItem.productId} is no longer available` });
       }
@@ -23,12 +23,18 @@ const createOrder = async (req, res) => {
         return res.status(400).json({ message: `Not enough stock for ${product.name}` });
       }
 
-      const price = product.sellingPrice;
-      totalAmount += price * cartItem.quantity;
+      const { sellingPricePerUnit } = calculateCurrentSellingPrice(product.buyingPricePerUnit, product.expiryDate);
+      totalAmount += sellingPricePerUnit * cartItem.quantity;
+      orderItems.push({ productId: product._id, quantity: cartItem.quantity, price: sellingPricePerUnit });
+      productsToUpdate.push({ product, quantity: cartItem.quantity });
+    }
 
-      orderItems.push({ productId: product._id, quantity: cartItem.quantity, price });
+    if (totalAmount < 200) {
+      return res.status(400).json({ message: `Minimum cart value is ₹200. Your cart totals ₹${totalAmount}` });
+    }
 
-      product.quantity -= cartItem.quantity;
+    for (const { product, quantity } of productsToUpdate) {
+      product.quantity -= quantity;
       if (product.quantity === 0) product.status = 'sold';
       await product.save();
     }
@@ -39,6 +45,7 @@ const createOrder = async (req, res) => {
       totalAmount,
       orderStatus: 'placed',
       paymentMethod: paymentMethod || 'mock',
+      deliveryAddress: deliveryAddress || req.user.address,
     });
 
     res.status(201).json(order);
@@ -78,7 +85,14 @@ const completeDelivery = async (req, res) => {
   try {
     const { distanceKm } = req.body;
     if (distanceKm === undefined || distanceKm === '') {
-      return res.status(400).json({ message: 'Distance travelled is required to log your delivery earning' });
+      return res.status(400).json({ message: 'Distance from warehouse is required to complete delivery' });
+    }
+
+    const { charge, rejected } = calculateDistanceCharge(distanceKm);
+    if (rejected) {
+      return res.status(400).json({
+        message: `Distance (${distanceKm}km) exceeds the 8.75km limit. This delivery cannot be completed — please reassign to a closer agent.`,
+      });
     }
 
     const order = await Order.findById(req.params.id);
@@ -90,7 +104,8 @@ const completeDelivery = async (req, res) => {
     order.deliveryAgentId = req.user._id;
     order.deliveryStatus = 'delivered';
     order.deliveryDistanceKm = Number(distanceKm);
-    order.deliveryEarning = calculateDeliveryEarning(Number(distanceKm));
+    order.deliveryCharge = charge;
+    order.deliveryEarning = AGENT_FLAT_PAY + charge; // ExpiryMart's ₹30 + the buyer's distance charge
     order.deliveredAt = new Date();
     order.orderStatus = 'delivered';
 

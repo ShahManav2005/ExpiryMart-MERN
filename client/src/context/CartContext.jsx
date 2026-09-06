@@ -13,15 +13,24 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem('cart', JSON.stringify(newItems));
   };
 
-  const addToCart = (product, pricing) => {
-    const existing = items.find((item) => item.productId === product._id);
+  const addToCart = (product, pricing, qty = 1) => {
+    const existing = items.find(
+      (item) => item.productId === product._id
+    );
 
     if (existing) {
       const updated = items.map((item) =>
         item.productId === product._id
-          ? { ...item, quantity: Math.min(item.quantity + 1, product.quantity) }
+          ? {
+              ...item,
+              quantity: Math.min(
+                item.quantity + qty,
+                product.quantity
+              ),
+            }
           : item
       );
+
       saveCart(updated);
     } else {
       saveCart([
@@ -32,7 +41,7 @@ export const CartProvider = ({ children }) => {
           image: product.images?.[0] || '',
           price: pricing.discountedPrice,
           maxQuantity: product.quantity,
-          quantity: 1,
+          quantity: Math.min(qty, product.quantity),
         },
       ]);
     }
@@ -40,27 +49,51 @@ export const CartProvider = ({ children }) => {
 
   const updateQuantity = (productId, quantity) => {
     if (quantity < 1) return;
+
     const updated = items.map((item) =>
       item.productId === productId
-        ? { ...item, quantity: Math.min(quantity, item.maxQuantity) }
+        ? {
+            ...item,
+            quantity: Math.min(quantity, item.maxQuantity),
+          }
         : item
     );
+
     saveCart(updated);
   };
 
   const removeFromCart = (productId) => {
-    saveCart(items.filter((item) => item.productId !== productId));
+    saveCart(
+      items.filter((item) => item.productId !== productId)
+    );
   };
 
   const clearCart = () => {
     saveCart([]);
   };
 
-  const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalAmount = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+
+  const totalItems = items.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
 
   return (
-    <CartContext.Provider value={{ items, addToCart, updateQuantity, removeFromCart, clearCart, totalAmount, totalItems }}>
+    <CartContext.Provider
+      value={{
+        items,
+        addToCart,
+        updateQuantity,
+        removeFromCart,
+        clearCart,
+        totalAmount,
+        totalItems,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );

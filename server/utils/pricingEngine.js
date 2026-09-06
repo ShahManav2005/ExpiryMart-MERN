@@ -2,57 +2,57 @@ const getDaysLeft = (expiryDate) => {
   return Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
 };
 
-// % of MRP that ExpiryMart pays the seller, based on days remaining
+// % of Total MRP paid to seller (the BASE amount, before any distance charge)
 const getBuyingPricePercent = (daysLeft) => {
-  const monthsLeft = daysLeft / 30;
-  if (monthsLeft <= 1) return 40;
-  if (monthsLeft <= 2) return 45;
-  if (monthsLeft <= 3) return 50;
-  return 50; // capped at 3 months per business rule
+  if (daysLeft >= 90) return 50;
+  if (daysLeft >= 60) return 45;
+  return 40; // 30–59 days
 };
 
-// % markup added on top of buying price to get the buyer's selling price
-const getMarkupPercent = (daysLeft) => {
-  const monthsLeft = daysLeft / 30;
-  if (monthsLeft <= 2) return 80;
-  if (monthsLeft <= 3) return 85;
-  return 90;
+// % markup on the BASE seller buying amount — recalculated live for buyers
+const getSellingMarkupPercent = (daysLeft) => {
+  if (daysLeft >= 90) return 90;
+  if (daysLeft >= 60) return 85;
+  if (daysLeft >= 30) return 80;
+  return 60; // below 30 days — clearance
 };
 
+const AGENT_FLAT_PAY = 30;
+const MAX_DISTANCE_KM = 8.75;
+
+// Shared by BOTH seller-side pickup distance and buyer-side delivery distance
+const calculateDistanceCharge = (distanceKm) => {
+  const d = Number(distanceKm);
+  if (d > MAX_DISTANCE_KM) return { charge: 0, rejected: true };
+  if (d >= 5.01) return { charge: 20, rejected: false };
+  if (d >= 3.76) return { charge: 10, rejected: false };
+  return { charge: 0, rejected: false }; // 0–3.75 km, free
+};
+
+// Called once, at approval — computes the BASE amount (before any distance deduction)
 const calculateRecommendedBuyingPrice = (product) => {
   const daysLeft = getDaysLeft(product.expiryDate);
   const percent = getBuyingPricePercent(daysLeft);
-  const buyingPrice = Math.round(product.price * (percent / 100));
-  return { daysLeft, percent, buyingPrice };
+  const totalMRP = product.price * product.quantity;
+  const totalBuyingPrice = Math.round(totalMRP * (percent / 100));
+  return { daysLeft, percent, totalMRP, totalBuyingPrice };
 };
 
-const calculateSellingPrice = (buyingPrice, expiryDate) => {
+// Called every time a buyer views/buys — always uses the BASE per-unit price, never the post-deduction one
+const calculateCurrentSellingPrice = (buyingPricePerUnit, expiryDate) => {
   const daysLeft = getDaysLeft(expiryDate);
-  const markupPercent = getMarkupPercent(daysLeft);
-  const markup = Math.round(buyingPrice * (markupPercent / 100));
-  const sellingPrice = buyingPrice + markup;
-  return { markupPercent, markup, sellingPrice };
-};
-
-const calculateAgentCommission = (sellingPrice) => Math.round(sellingPrice * 0.10);
-
-const DELIVERY_FLAT_EARNING = 15; // simplification: assumes ≤5km, no geolocation in scope
-
-const calculateCompanyProfit = (sellingPrice, buyingPrice, agentCommission, deliveryEarning = DELIVERY_FLAT_EARNING) => {
-  return sellingPrice - buyingPrice - agentCommission - deliveryEarning;
-};
-
-const calculateDeliveryEarning = (distanceKm = 0) => {
-  if (distanceKm <= 5) return DELIVERY_FLAT_EARNING;
-  return DELIVERY_FLAT_EARNING + (distanceKm - 5) * 3;
+  const markupPercent = getSellingMarkupPercent(daysLeft);
+  const sellingPricePerUnit = Math.round(buyingPricePerUnit * (1 + markupPercent / 100));
+  return { daysLeft, markupPercent, sellingPricePerUnit };
 };
 
 module.exports = {
   getDaysLeft,
+  getBuyingPricePercent,
+  getSellingMarkupPercent,
   calculateRecommendedBuyingPrice,
-  calculateSellingPrice,
-  calculateAgentCommission,
-  calculateCompanyProfit,
-  calculateDeliveryEarning,
-  DELIVERY_FLAT_EARNING,
+  calculateCurrentSellingPrice,
+  calculateDistanceCharge,
+  AGENT_FLAT_PAY,
+  MAX_DISTANCE_KM,
 };
