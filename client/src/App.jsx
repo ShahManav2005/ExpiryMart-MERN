@@ -16,11 +16,12 @@ import AgentProfile from './pages/agent/AgentProfile'
 import AddProduct from './pages/seller/AddProduct'
 import SalesHistory from './pages/seller/SalesHistory'
 import SellerProfile from './pages/seller/SellerProfile'
+import SellerInvoice from './pages/seller/SellerInvoice'
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" />} />
+      <Route path="/" element={<Navigate to="/register" />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
@@ -48,6 +49,9 @@ function App() {
       } />
       <Route path="/seller/profile" element={
         <ProtectedRoute allowedRoles={['seller']}><Layout><SellerProfile /></Layout></ProtectedRoute>
+      } />
+      <Route path="/seller/invoice/:id" element={
+        <ProtectedRoute allowedRoles={['seller']}><Layout><SellerInvoice /></Layout></ProtectedRoute>
       } />
 
       <Route path="/agent/dashboard" element={

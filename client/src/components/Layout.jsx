@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import Logo from './Logo';
 import Footer from './Footer';
 
 export default function Layout({ children }) {
@@ -17,8 +18,8 @@ export default function Layout({ children }) {
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-10 border-b" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-          <Link to={user ? `/${user.role}/dashboard` : '/login'} className="font-display font-extrabold text-lg" style={{ color: 'var(--brand)' }}>
-            ExpiryMart
+          <Link to={user ? `/${user.role}/dashboard` : '/register'}>
+            <Logo size={30} />
           </Link>
 
           <div className="flex items-center gap-5 text-sm">

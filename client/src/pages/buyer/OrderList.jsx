@@ -62,7 +62,9 @@ export default function OrderList() {
                 ))}
               </div>
 
-              <p className="font-display font-bold tabular">₹{order.totalAmount}</p>
+             <p className="font-semibold tabular">
+                ₹{order.deliveryStatus === 'delivered' ? order.totalAmount + (order.deliveryCharge || 0) : order.totalAmount} — {order.orderStatus}
+            </p>
             </Link>
           ))}
         </div>

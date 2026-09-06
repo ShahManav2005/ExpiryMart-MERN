@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import Badge from '../../components/Badge';
 import EmptyState from '../../components/EmptyState';
+import {Link} from 'react-router-dom'
 
 const statusVariant = {
   pending_inspection: 'warning',
@@ -87,7 +88,9 @@ export default function SalesHistory() {
             <tbody>
               {data.products.map((p) => (
                 <tr key={p._id} style={{ borderTop: '1px solid var(--border)' }}>
-                  <td className="p-3 font-medium">{p.name}</td>
+                  <td className="p-3 font-medium">
+                    <Link to={`/seller/invoice/${p._id}`} style={{ color: 'var(--brand)' }}>{p.name}</Link>
+                  </td>
                   <td className="p-3 tabular">₹{p.totalMRP ?? (p.price * p.quantity)}</td>
                   <td className="p-3 tabular">{p.sellerNetPayout ? `₹${p.sellerNetPayout}` : '—'}</td>
                   <td className="p-3"><Badge variant={statusVariant[p.status]}>{statusLabel[p.status]}</Badge></td>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../../api/axios';
 import OrderInvoice from '../../components/OrderInvoice';
+import { downloadInvoicePDF } from '../../utils/generateInvoicePdf';
 
 export default function OrderStatus() {
   const { id } = useParams();
@@ -19,6 +20,29 @@ export default function OrderStatus() {
     };
     fetchOrder();
   }, [id]);
+
+  const handleDownload = () => {
+  const grandTotal = order.totalAmount + (order.deliveryCharge || 0);
+  downloadInvoicePDF({
+    filename: `ExpiryMart-Order-${order._id.slice(-6)}.pdf`,
+    title: 'Order Invoice',
+    meta: [
+      `Order ID: ${order._id}`,
+      `Date: ${new Date(order.createdAt).toLocaleDateString()}`,
+      `Deliver to: ${order.deliveryAddress || '-'}`,
+    ],
+    lines: order.items.map((item) => ({
+      label: `${item.productId?.name || 'Product'} x ${item.quantity}`,
+      value: `Rs ${item.price * item.quantity}`,
+    })),
+    totals: [
+      { label: 'Subtotal', value: `Rs ${order.totalAmount}` },
+      { label: 'Delivery charge', value: order.deliveryCharge ? `Rs ${order.deliveryCharge}` : 'Free' },
+      { label: 'Grand Total', value: `Rs ${grandTotal}`, bold: true },
+    ],
+    footerNote: 'This is a system-generated invoice for demonstration purposes.',
+  });
+  };
 
   if (loading) return <div className="max-w-2xl mx-auto px-4 py-10 text-center">Loading...</div>;
   if (!order) return <div className="max-w-2xl mx-auto px-4 py-10 text-center" style={{ color: 'var(--danger)' }}>Order not found</div>;
@@ -38,6 +62,13 @@ export default function OrderStatus() {
       )}
 
       <OrderInvoice order={order} showDeliveryPending />
+      <button
+        onClick={handleDownload}
+        className="mt-3 px-4 py-2.5 rounded-xl font-semibold text-sm w-full"
+        style={{ border: '1.5px solid var(--brand)', color: 'var(--brand)' }}
+      >
+        Download PDF
+      </button>
 
       <Link to="/buyer/orders" className="mt-4 block text-center font-semibold" style={{ color: 'var(--brand)' }}>View all orders</Link>
     </div>
